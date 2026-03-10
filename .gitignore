@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Data & DB (never commit personal conversation data)
+*.db
+*.db-shm
+*.db-wal
+*.faiss
+*_faiss_meta.json
+
+# Exports & media
+export/
+*-export/
+*.zip
+*.ogg
+*.opus
+*.mp3
+*.mp4
+*.jpg
+*.jpeg
+*.png
+*.webp
+
+# Env
+.env
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Local MCP config
+.mcp.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pipeline state (machine-local, not committed)
+
+# Runtime data (DB, FAISS index, state — machine-local)
+data/*
+!data/.gitkeep
