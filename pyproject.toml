@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wain"
-version = "0.1.0"
+version = "0.1.1"
 description = "Turn a WhatsApp export into a searchable, semantically-indexed knowledge base."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
-authors = [{name = "Max Krueger"}]
+authors = [{name = "Max Hermez"}]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -30,6 +30,12 @@ dependencies = [
     "rich>=13.0",
     "tomli-w>=1.2",
     "keyring>=25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
 
 [project.urls]

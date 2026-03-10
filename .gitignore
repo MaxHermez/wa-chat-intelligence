@@ -31,6 +31,7 @@ export/
 # Env
 .env
 !.env.example
+.pypirc
 
 # IDE
 .idea/

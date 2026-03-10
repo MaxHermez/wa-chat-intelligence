@@ -43,7 +43,7 @@ The speed fix is **async API calls**: we don't block the thread while waiting fo
 
 - Zero infra overhead — one file, works anywhere
 - FTS5 is built-in and fast for keyword search
-- Good enough for 16k-100k messages (this use case)
+- Good enough for tens of thousands of messages
 - Easy to inspect, query, and extend
 
 ### FTS5 over raw messages
@@ -135,10 +135,85 @@ wa-chat-intelligence/
 
 Install and run:
 ```bash
-source .env
-uv pip install -e . --no-build-isolation
+pip install wain
 wain status
 ```
+
+---
+
+## Data Model
+
+### `messages` table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key |
+| `timestamp` | TEXT | ISO 8601 |
+| `date` | TEXT | YYYY-MM-DD |
+| `sender` | TEXT | Normalized sender name |
+| `raw_sender` | TEXT | Original name from export |
+| `text` | TEXT | Message body (null for media-only) |
+| `media_file` | TEXT | Filename if media attached |
+| `media_type` | TEXT | image / video / audio / document / other |
+| `media_path` | TEXT | Resolved local path (if file exists) |
+| `chunk_id` | INTEGER | FK to chunks.id |
+| `notes` | TEXT | Human annotation |
+| `transcript` | TEXT | Whisper transcription for audio messages |
+
+### `chunks` table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key |
+| `date_start` | TEXT | YYYY-MM-DD |
+| `date_end` | TEXT | YYYY-MM-DD |
+| `msg_start_id` | INTEGER | First message ID in chunk |
+| `msg_end_id` | INTEGER | Last message ID in chunk |
+| `message_count` | INTEGER | Messages in this chunk |
+| `summary` | TEXT | JSON-structured LLM summary |
+| `embedding_id` | INTEGER | FAISS index position |
+| `notes` | TEXT | Human annotation (triggers re-embedding on update) |
+
+### Summary JSON schema
+
+```json
+{
+  "date": "YYYY-MM-DD",
+  "message_count": 87,
+  "energy_level": "high",
+  "mood": "warm",
+  "initiator": "Alice",
+  "topics": ["travel plans", "work stress"],
+  "key_moments": ["Alice asked about the trip dates"],
+  "plans": ["Portugal late March"],
+  "cancellations": [],
+  "media_context": "3 voice notes exchanged, tone was warm",
+  "relationship_signal": "high engagement, planning mode",
+  "needs_prior_context": false,
+  "summary": "..."
+}
+```
+
+---
+
+## Incremental Updates
+
+Every stage is delta-aware. Re-run the pipeline after a fresh export:
+
+```bash
+wain run   # each stage processes only what's new
+```
+
+| Stage | Behavior on re-run |
+|-------|-------------------|
+| `parse` | Inserts only messages newer than the latest in DB |
+| `transcribe` | Skips messages with existing transcripts |
+| `describe` | Skips images with existing descriptions |
+| `chunk` | Creates chunks for new dates; extends the last chunk if it grew |
+| `summarize` | Skips chunks that already have summaries |
+| `embed` | Skips chunks that already have embeddings |
+
+Running twice on the same export produces zero changes.
 
 ---
 

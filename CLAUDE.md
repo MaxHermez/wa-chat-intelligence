@@ -43,7 +43,13 @@ All commands accept `--workspace <name>` for multi-conversation support.
 
 ## Testing
 
-No test framework is configured yet. The `/tests/` directory is empty. Validation can be run via `wain validate`.
+```bash
+uv run python -m pytest tests/ -v
+```
+
+Tests run offline (no API key needed). Covers parser, chunker, config, query filtering, and CLI smoke tests. Dev dependencies: `uv pip install -e ".[dev]" --no-build-isolation`
+
+Schema validation can also be run via `wain validate`.
 
 ## Architecture
 

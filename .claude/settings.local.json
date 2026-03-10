@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__linear__save_issue",
+      "Bash(uv publish:*)",
+      "Bash(uv pip:*)",
+      "Bash(uv run:*)"
+    ]
+  }
+}
