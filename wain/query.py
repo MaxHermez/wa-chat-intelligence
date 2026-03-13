@@ -82,6 +82,31 @@ def format_summary_markdown(raw: str, date: str = "", score=None) -> str:
     return "\n".join(lines)
 
 
+def format_messages_raw(messages: list[dict]) -> str:
+    """Format raw messages for display: timestamp, sender, text/media/transcript."""
+    lines = []
+    for m in messages:
+        ts = m.get("timestamp", "")
+        sender = m.get("sender", "")
+        header = f"[{ts}] {sender}:"
+        parts = [header]
+        text = m.get("text")
+        if text:
+            parts.append(f"  {text}")
+        media_type = m.get("media_type")
+        if media_type:
+            media_file = m.get("media_file", "")
+            parts.append(f"  ({media_type}: {media_file})" if media_file else f"  ({media_type})")
+        transcript = m.get("transcript")
+        if transcript:
+            parts.append(f"  [transcript] {transcript}")
+        description = m.get("description")
+        if description:
+            parts.append(f"  [description] {description}")
+        lines.append("\n".join(parts))
+    return "\n\n".join(lines)
+
+
 # -- Core search functions ----------------------------------------------------
 
 def format_compact(raw: str, date: str = "", score=None) -> str:
@@ -177,13 +202,14 @@ def get_by_date(date: str) -> dict:
                 "notes": row[2],
             }
         c.execute("""
-            SELECT id, timestamp, sender, text, media_file, media_type, notes
+            SELECT id, timestamp, sender, text, media_file, media_type, notes, transcript, description
             FROM messages WHERE date = ?
             ORDER BY timestamp ASC
         """, (date,))
         messages = [
             {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
-             "media_file": r[4], "media_type": r[5], "notes": r[6]}
+             "media_file": r[4], "media_type": r[5], "notes": r[6],
+             "transcript": r[7], "description": r[8]}
             for r in c.fetchall()
         ]
     return {"date": date, "chunk": chunk, "messages": messages}

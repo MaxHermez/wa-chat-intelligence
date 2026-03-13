@@ -69,7 +69,7 @@ Use cases:
 - **Type:** `IndexFlatIP` — inner product (cosine similarity after L2 normalization)
 - **Dimension:** 1536 (OpenAI `text-embedding-3-small`)
 - **Persistence:** `chat.faiss` + `chat_faiss_meta.json` (maps embedding IDs to chunk IDs)
-- **Threshold:** `0.30` default (configurable via `FAISS_THRESHOLD` env var). Hybrid search uses a lower semantic threshold (½ × FAISS_THRESHOLD) since FTS5 keyword scoring compensates for borderline semantic matches.
+- **Threshold:** `0.20` default (configurable via `FAISS_THRESHOLD` env var). Hybrid search uses a lower semantic threshold (½ × FAISS_THRESHOLD) since FTS5 keyword scoring compensates for borderline semantic matches.
 
 The metadata file is a simple JSON dict:
 ```json

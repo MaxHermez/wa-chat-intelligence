@@ -1,29 +1,17 @@
 # Contributing
 
-Thank you for your interest in contributing to `wa-chat-intelligence`.
+Thanks for your interest in contributing to `wain`!
 
-## Development Setup
+## Development setup
 
-**Requirements:** Python 3.12+, [uv](https://github.com/astral-sh/uv) (recommended) or pip.
+**Requirements:** Python 3.12+, [uv](https://github.com/astral-sh/uv)
 
 ```bash
-# Clone the repo
 git clone https://github.com/MaxHermez/wa-chat-intelligence.git
 cd wa-chat-intelligence
-
-# Create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-
-# Install in editable mode with all dependencies
-pip install -e .
-
-# Or with uv (faster):
-uv pip install -e . --no-build-isolation
-
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env — at minimum set OPENAI_API_KEY and CHAT_TXT_FILE
+uv venv && source .venv/bin/activate
+uv pip install setuptools wheel
+uv pip install -e ".[dev]" --no-build-isolation
 ```
 
 Verify the install:
@@ -31,56 +19,91 @@ Verify the install:
 wain --help
 ```
 
-## Running the Pipeline on Test Data
+## Branching
 
-Place a WhatsApp `.txt` export (and optionally its media files) in the location
-specified by `CHAT_TXT_FILE` / `CHAT_EXPORT_DIR` in your `.env`, then run:
+- **`main`** is the stable release branch. Do not push directly to `main`.
+- **`dev`** is the integration branch. All work merges here first.
+- Create feature branches off `dev`, named after the issue: `hhc-115-topics-index`.
+- When `dev` is stable and ready for release, it gets merged to `main` via PR.
 
-```bash
-# Full pipeline in one command
-wain run
-
-# Or step by step
-wain parse
-wain transcribe          # requires WHISPER_BACKEND configured
-wain describe            # requires VISION_BACKEND configured
-wain chunk
-wain summarize
-wain embed
-
-# Query the result
-wain query
+```
+main  <-- release merges only
+ |
+dev   <-- feature branches merge here
+ |
+hhc-115-topics-index  <-- your work
 ```
 
-See `README.md` for the full environment variable reference and pipeline details.
+## Making changes
 
-## Code Style
-
-No linter or formatter is configured yet. Follow the existing style:
-
-- **PEP 8** — standard Python formatting; 4-space indentation, ~100 char line limit
-- **Type hints** where already present — keep new code consistent
-- **Parameterized SQL** — never f-string interpolation for queries
-- **`config.py` as single source of truth** — all paths and settings via `wain.config`; call accessors at runtime (not module-level imports) for workspace-aware values
-- **`typer.echo(..., err=True)`** for progress output, plain `print()` for data output
-
-## Submitting a Pull Request
-
-1. Fork the repository and create a feature branch:
+1. Branch off `dev`:
    ```bash
-   git checkout -b fix/short-description
+   git checkout dev && git pull origin dev
+   git checkout -b hhc-XXX-short-description
    ```
-2. Make your changes. Commit with a descriptive message:
+
+2. Make your changes. Follow existing code style -- no linter config yet, just match what's there.
+
+3. Run tests:
    ```bash
-   git commit -m "fix: short description of what changed"
+   uv run python -m pytest tests/ -v
    ```
-3. Push and open a PR against `main`.
-4. Describe what the PR changes and why. If it fixes a bug, include reproduction steps.
+
+4. Push and open a PR targeting `dev`:
+   ```bash
+   git push -u origin hhc-XXX-short-description
+   ```
+
+## Code conventions
+
+- **No personal names** in code, docs, or examples. Use Alice/Bob as generic names.
+- **ASCII-only in print() output.** No Unicode symbols (checkmarks, em-dashes, etc.) -- Windows cp1252 encoding breaks on them.
+- **Parameterized SQL** -- never f-string interpolation for queries.
+- **`config.py` as single source of truth** -- all paths and settings via `wain.config`; call accessors at runtime (not module-level imports) for workspace-aware values.
+- Keep changes focused. One issue per PR.
+
+## Issue tracking
+
+The project uses [Linear](https://linear.app) for issue tracking (team: HHC, project: wa-chat-intelligence). If you don't have Linear access, open a GitHub Issue instead -- we'll transfer it.
+
+Issue template:
+
+```
+## Context
+Why this needs to exist / what problem it solves.
+
+## Task
+- Specific step 1
+- Specific step 2
+
+## Acceptance criteria
+- [ ] Thing that must be true when done
+- [ ] Another thing
+
+## Notes
+Anything relevant -- gotchas, related files, dependencies.
+```
 
 ## Tests
 
-There is no test suite yet — the `tests/` directory is a placeholder. Contributions
-that add tests for the parser, chunker, or query layer are very welcome.
+Tests run offline (no API key needed). They cover the parser, chunker, config, query filtering, and CLI.
+
+```bash
+uv run python -m pytest tests/ -v
+```
+
+If your change touches search or embedding logic, also do a manual sanity check against real data if you have a populated workspace.
+
+## Pull request guidelines
+
+- Fill out the PR template (summary, related issue, test plan).
+- PRs target `dev`, not `main`.
+- Squash merge is the default -- keep your PR title clean, it becomes the commit message.
+- PRs require at least 1 approval before merge.
+
+## Releases
+
+Releases are cut from `main` and published to PyPI. Version is bumped in both `pyproject.toml` and `wain/__init__.py`. Only maintainers handle releases.
 
 ## License
 
