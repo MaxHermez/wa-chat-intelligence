@@ -27,3 +27,8 @@ class TestCLISmoke:
         result = runner.invoke(app, ["config", "--help"])
         assert result.exit_code == 0
         assert "config" in result.output.lower()
+
+    def test_raw_without_date_errors(self):
+        result = runner.invoke(app, ["query", "--raw"])
+        assert result.exit_code == 1
+        assert "--raw requires --date" in result.output

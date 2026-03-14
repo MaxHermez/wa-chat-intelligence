@@ -810,19 +810,25 @@ def query(
     date_from: Annotated[Optional[str], typer.Option("--from", help="Filter results to chunks on or after this date (YYYY-MM-DD).")] = None,
     date_to: Annotated[Optional[str], typer.Option("--to", help="Filter results to chunks on or before this date (YYYY-MM-DD).")] = None,
     sender: Annotated[Optional[str], typer.Option("--sender", "-s", help="Filter to chunks containing messages from this sender (exact match, case-insensitive).")] = None,
+    raw: Annotated[bool, typer.Option("--raw", help="Show raw messages instead of summary (use with --date).")] = False,
 ):
     """
     Query the knowledge base: semantic search, full-text search, or date lookup.
 
     Without arguments, launches an interactive REPL.
     With a QUESTION argument, runs a one-shot query and prints results.
+    Use --date with --raw to see individual messages instead of the summary.
     """
     _apply_workspace(workspace)
     from wain.query import (
         run_query, interactive, stats,
         search_fulltext, get_by_date, format_summary_markdown, format_compact,
-        filter_by_date_range, filter_by_sender,
+        format_messages_raw, filter_by_date_range, filter_by_sender,
     )
+
+    if raw and not date:
+        typer.echo("Error: --raw requires --date/-d to specify which day to show.", err=True)
+        raise typer.Exit(code=1)
 
     if stats_only:
         typer.echo(json.dumps(stats(), indent=2))
@@ -830,12 +836,19 @@ def query(
 
     if date:
         result = get_by_date(date)
-        chunk = result.get("chunk")
-        if chunk:
-            typer.echo(format_summary_markdown(chunk["summary"], date=date))
+        messages = result.get("messages", [])
+        if raw:
+            if messages:
+                typer.echo(format_messages_raw(messages))
+            else:
+                typer.echo(f"No messages found for {date}.")
         else:
-            typer.echo(f"No chunk found for {date}.")
-        typer.echo(f"\n{len(result.get('messages', []))} messages on this date.")
+            chunk = result.get("chunk")
+            if chunk:
+                typer.echo(format_summary_markdown(chunk["summary"], date=date))
+            else:
+                typer.echo(f"No chunk found for {date}.")
+        typer.echo(f"\n{len(messages)} messages on this date.")
         return
 
     # Warn if index is empty -- but still allow FTS

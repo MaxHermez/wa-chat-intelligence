@@ -159,20 +159,35 @@ def search(query: str, top_k: int = 5, threshold: float | None = None) -> list[d
 
 
 def get_chunk_messages_raw(chunk_id: int) -> list[dict]:
-    """Retrieve raw messages for a chunk."""
+    """Retrieve raw messages for a chunk, including transcript/description if available."""
     with closing(sqlite3.connect(config.active_db_path())) as conn:
         c = conn.cursor()
-        c.execute("""
-            SELECT id, timestamp, sender, text, media_file, media_type, notes
-            FROM messages WHERE chunk_id = ?
-            ORDER BY timestamp ASC
-        """, (chunk_id,))
-        rows = c.fetchall()
-    return [
-        {"id": r[0], "timestamp": r[1], "sender": r[2],
-         "text": r[3], "media_file": r[4], "media_type": r[5], "notes": r[6]}
-        for r in rows
-    ]
+        try:
+            c.execute("""
+                SELECT id, timestamp, sender, text, media_file, media_type, notes, transcript, description
+                FROM messages WHERE chunk_id = ?
+                ORDER BY timestamp ASC
+            """, (chunk_id,))
+            return [
+                {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
+                 "media_file": r[4], "media_type": r[5], "notes": r[6],
+                 "transcript": r[7], "description": r[8]}
+                for r in c.fetchall()
+            ]
+        except sqlite3.OperationalError as e:
+            if "no such column" not in str(e):
+                raise
+            c.execute("""
+                SELECT id, timestamp, sender, text, media_file, media_type, notes
+                FROM messages WHERE chunk_id = ?
+                ORDER BY timestamp ASC
+            """, (chunk_id,))
+            return [
+                {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
+                 "media_file": r[4], "media_type": r[5], "notes": r[6],
+                 "transcript": None, "description": None}
+                for r in c.fetchall()
+            ]
 
 
 def add_note(conn: sqlite3.Connection, chunk_id: int = None, msg_id: int = None, note: str = ""):

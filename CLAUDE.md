@@ -8,18 +8,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow Rules
 
-- **Always `git pull` before starting any work** — another agent may have pushed changes. Pull frequently during long sessions too, especially before reading or editing files.
-- **Never fix code directly** — always file issues to Linear instead. A coding agent automatically picks them up. The only exception is editing `CLAUDE.md` itself.
-- **Issue tracker**: Linear, team `HHC`, project `wa-chat-intelligence`. File issues there, not in markdown files.
+- **Always `git pull` before starting any work** — another agent may have pushed changes.
+- **Branching**: `main` is stable/release. `dev` is the integration branch. Feature branches off `dev`, named `hhc-XXX-short-description`. PRs target `dev`, squash merged. `dev` merges to `main` for releases.
+- **Issue tracker**: Linear, team `HHC`, project `wa-chat-intelligence`. Use `/issue` skill to file issues with the standard template. External contributors use GitHub Issues.
 - **Don't use personal names** in code, docs, or examples. Use Alice/Bob as generic names (consistent with `.env.example`).
 - **Windows compatibility**: Avoid Unicode symbols (checkmarks, em-dashes, etc.) in `print()` output — Windows cp1252 encoding can't handle them. Use ASCII alternatives.
+- **After code changes**: Use the `pipeline-check` agent to run tests + sanity checks. Use the `test-query` agent after search/embedding changes to benchmark retrieval quality.
 
 ## Build & Run
 
 ```bash
 uv venv && source .venv/bin/activate
-uv pip install -r requirements.txt
-uv pip install -e . --no-build-isolation
+uv pip install setuptools wheel
+uv pip install -e ".[dev]" --no-build-isolation
 ```
 
 Requires `OPENAI_API_KEY` env var. See `.env.example` for all config options.
@@ -79,7 +80,7 @@ Each stage is **delta-aware** — it tracks what was last processed via `data/pi
 ### FAISS Index
 - Dimension: 1536, type: IndexFlatIP
 - Metadata mapping (embedding ID → chunk ID) in `chat_faiss_meta.json`
-- Similarity threshold: 0.30 (configurable via `FAISS_THRESHOLD` env var)
+- Similarity threshold: 0.20 (configurable via `FAISS_THRESHOLD` env var)
 
 ### Summarization Design
 Summaries are generated **sequentially** (not parallel) because each summary can reference prior context. The summarizer injects:
@@ -99,8 +100,21 @@ Summaries are generated **sequentially** (not parallel) because each summary can
 | `SENDER_SELF` / `SENDER_OTHER` | Display names for output |
 | `SENDER_SELF_RAW` | Comma-separated raw names from export to map to SENDER_SELF |
 | `SUMMARIZER_CONTEXT` | Free-text context injected into summarizer prompt |
-| `FAISS_THRESHOLD` | Cosine similarity gate (default: 0.30) |
+| `FAISS_THRESHOLD` | Cosine similarity gate (default: 0.20) |
 | `WHISPER_BACKEND` | "local" or "api" (default: "local") |
+
+## Publishing
+
+```bash
+uv build
+export $(grep UV_PUBLISH_TOKEN .env) && uv publish
+```
+
+PyPI token is in `.env` as `UV_PUBLISH_TOKEN`. Version must be bumped in both `pyproject.toml` and `wain/__init__.py`.
+
+## Config Resolution
+
+CLI flags > workspace TOML (`~/.wain/workspaces/<name>/config.toml`) > global TOML (`~/.wain/config.toml`) > env vars > defaults. See `CONFIGURATION.md` for details.
 
 ## Dependencies
 
