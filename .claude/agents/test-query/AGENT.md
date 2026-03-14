@@ -13,7 +13,7 @@ Run a standard set of benchmark queries against the search pipeline and report r
 
 ## Setup
 
-All commands use `uv run python`. The database is at `data/chat.db`. Always set stdout encoding:
+All commands use `uv run python`. The database path is resolved by `wain.config.active_db_path()` (defaults to `data/chat.db`, but may differ if a workspace is active). Always set stdout encoding:
 ```python
 import sys
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')

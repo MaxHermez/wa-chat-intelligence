@@ -37,4 +37,4 @@ Anything the coding agent should know -- gotchas, related files, dependencies.
 
 3. Use the `mcp__linear__save_issue` tool to create the issue.
 4. Report back the issue ID (e.g. HHC-117) and URL.
-5. Update the issue tracking section in the memory file (`MEMORY.md`) with the new issue.
+5. Update the issue tracking section in the auto-memory index file (the project's `MEMORY.md` in the `.claude/projects/` directory) with the new issue.

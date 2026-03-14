@@ -22,17 +22,22 @@ uv run python -m wain.cli status
 ```
 Report: version number, pipeline state.
 
-### 3. Sample query (only if data/chat.db exists)
+### 3. Sample query (only if a DB exists)
 ```bash
 uv run python -c "
-import sys
+import sys, os
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-from wain.query import search_semantic, stats
-print('Stats:', stats())
-results = search_semantic('test query', top_k=1)
-print(f'Search returned {len(results)} results')
-if results:
-    print(f'Top score: {results[0][\"score\"]:.3f}')
+from wain import config
+db = config.active_db_path()
+if not os.path.exists(db):
+    print(f'No DB at {db} -- skipping search check')
+else:
+    from wain.query import search_semantic, stats
+    print('Stats:', stats())
+    results = search_semantic('test query', top_k=1)
+    print(f'Search returned {len(results)} results')
+    if results:
+        print(f'Top score: {results[0][\"score\"]:.3f}')
 "
 ```
 Report: DB stats, whether search returns results.

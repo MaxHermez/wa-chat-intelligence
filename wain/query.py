@@ -201,17 +201,30 @@ def get_by_date(date: str) -> dict:
                 "summary_parsed": parse_summary(row[1]),
                 "notes": row[2],
             }
-        c.execute("""
-            SELECT id, timestamp, sender, text, media_file, media_type, notes, transcript, description
-            FROM messages WHERE date = ?
-            ORDER BY timestamp ASC
-        """, (date,))
-        messages = [
-            {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
-             "media_file": r[4], "media_type": r[5], "notes": r[6],
-             "transcript": r[7], "description": r[8]}
-            for r in c.fetchall()
-        ]
+        try:
+            c.execute("""
+                SELECT id, timestamp, sender, text, media_file, media_type, notes, transcript, description
+                FROM messages WHERE date = ?
+                ORDER BY timestamp ASC
+            """, (date,))
+            messages = [
+                {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
+                 "media_file": r[4], "media_type": r[5], "notes": r[6],
+                 "transcript": r[7], "description": r[8]}
+                for r in c.fetchall()
+            ]
+        except sqlite3.OperationalError:
+            c.execute("""
+                SELECT id, timestamp, sender, text, media_file, media_type, notes
+                FROM messages WHERE date = ?
+                ORDER BY timestamp ASC
+            """, (date,))
+            messages = [
+                {"id": r[0], "timestamp": r[1], "sender": r[2], "text": r[3],
+                 "media_file": r[4], "media_type": r[5], "notes": r[6],
+                 "transcript": None, "description": None}
+                for r in c.fetchall()
+            ]
     return {"date": date, "chunk": chunk, "messages": messages}
 
 
