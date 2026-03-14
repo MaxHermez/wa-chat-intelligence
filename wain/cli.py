@@ -817,6 +817,7 @@ def query(
 
     Without arguments, launches an interactive REPL.
     With a QUESTION argument, runs a one-shot query and prints results.
+    Use --date with --raw to see individual messages instead of the summary.
     """
     _apply_workspace(workspace)
     from wain.query import (

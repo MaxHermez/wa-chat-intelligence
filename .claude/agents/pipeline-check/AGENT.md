@@ -46,7 +46,7 @@ Report: DB stats, whether search returns results.
 
 ```
 == Pipeline Check ==
-Tests:    55 passed, 0 failed
+Tests:    62 passed, 0 failed
 CLI:      v0.1.1, all stages complete
 Search:   OK (top score: 0.xxx)
 Overall:  PASS / FAIL
