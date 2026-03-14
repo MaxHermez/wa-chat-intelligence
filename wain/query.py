@@ -213,7 +213,9 @@ def get_by_date(date: str) -> dict:
                  "transcript": r[7], "description": r[8]}
                 for r in c.fetchall()
             ]
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as e:
+            if "no such column" not in str(e):
+                raise
             c.execute("""
                 SELECT id, timestamp, sender, text, media_file, media_type, notes
                 FROM messages WHERE date = ?

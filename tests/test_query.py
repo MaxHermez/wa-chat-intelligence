@@ -101,6 +101,52 @@ class TestFormatMessagesRaw:
         assert result.count("[2025-10-01") == 2
 
 
+class TestGetByDateFallback:
+    """Test that get_by_date handles old DBs missing transcript/description columns."""
+
+    def test_old_db_without_transcript_columns(self, tmp_path):
+        import sqlite3
+        from wain.query import get_by_date
+        from wain import config
+
+        db_path = str(tmp_path / "old.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute("""
+            CREATE TABLE messages (
+                id INTEGER PRIMARY KEY,
+                timestamp TEXT, date TEXT, sender TEXT, raw_sender TEXT,
+                text TEXT, media_file TEXT, media_type TEXT,
+                media_path TEXT, chunk_id INTEGER, notes TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE chunks (
+                id INTEGER PRIMARY KEY,
+                date_start TEXT, date_end TEXT,
+                msg_start_id INTEGER, msg_end_id INTEGER,
+                message_count INTEGER, summary TEXT,
+                embedding_id INTEGER, notes TEXT
+            )
+        """)
+        conn.execute("""
+            INSERT INTO messages (id, timestamp, date, sender, text)
+            VALUES (1, '2025-10-01T09:00:00', '2025-10-01', 'Alice', 'Hello')
+        """)
+        conn.commit()
+        conn.close()
+
+        original = config.active_db_path
+        config.active_db_path = lambda: db_path
+        try:
+            result = get_by_date("2025-10-01")
+            assert len(result["messages"]) == 1
+            assert result["messages"][0]["text"] == "Hello"
+            assert result["messages"][0]["transcript"] is None
+            assert result["messages"][0]["description"] is None
+        finally:
+            config.active_db_path = original
+
+
 class TestFilterByDateRange:
     RESULTS = [
         {"date_start": "2025-10-01", "chunk_id": 1},

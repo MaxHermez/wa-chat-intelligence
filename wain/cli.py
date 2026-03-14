@@ -825,6 +825,10 @@ def query(
         format_messages_raw, filter_by_date_range, filter_by_sender,
     )
 
+    if raw and not date:
+        typer.echo("Error: --raw requires --date/-d to specify which day to show.", err=True)
+        raise typer.Exit(code=1)
+
     if stats_only:
         typer.echo(json.dumps(stats(), indent=2))
         return
